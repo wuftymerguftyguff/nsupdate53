@@ -36,10 +36,12 @@ class R53:
 
     def getARecord(self, zoneid, Zone, host):
         Zone = self.validateZoneName(Zone)
-        rr = self.getResourceRecords(zoneid);
+        rr = self.getResourceRecords(zoneid)
         for rset in rr:
-            if rset.name == host + Zone and rset.type == "A":
+            if rset.name == host and rset.type == "A":
                 return rset
+
+
 
 
     def getZoneId(self, zone=None):
@@ -61,28 +63,33 @@ class R53:
             splitted = hostname.split(s)[1:]
             return s.join(splitted)
 
-    def addArecord(self,host,ip):
+    def addArecord(self, host, ip, ttl=86400):
         zone = self.zoneNameFromHostname(host)
         zoneID = self.getZoneId(zone)
-        self._addRR(zoneID,"A",host,ip)
+        self._addRR(zoneID,"A",host,ip,ttl)
 
     def delArecord(self, host):
         zone = self.zoneNameFromHostname(host)
         zoneID = self.getZoneId(zone)
         self._delRR(zoneID, "A", host)
 
-    def _addRR(self,zoneid,rectype,host,ip,ttl=300):
+    def _addRR(self,zoneid,rectype,host,ip,ttl=86400):
         if self.changes is None:
             self.changes = ResourceRecordSets(self.ar53, zoneid)
         change = self.changes.add_change("CREATE", host, rectype, ttl)
         change.add_value(ip)
 
 
-    def _delRR(self,zoneid,rectype,host,ttl=300):
-        if self.changes is None:
-            self.changes = ResourceRecordSets(self.ar53, zoneid)
-        change = self.changes.add_change("DELETE", host, rectype, ttl)
-        change.add_value("4.3.2.1")
+    def _delRR(self,zoneid,rectype,host,ttl=86400):
+        zone = self.zoneNameFromHostname(host)
+        ARecord = self.getARecord(zoneid, zone, host)
+        if ARecord:
+            oldIP = ARecord.resource_records[0]
+            if oldIP:
+                if self.changes is None:
+                    self.changes = ResourceRecordSets(self.ar53, zoneid)
+                change = self.changes.add_change("DELETE", host, rectype, ttl)
+                change.add_value(oldIP)
 
     def commit(self):
         if self.changes is not None:
