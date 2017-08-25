@@ -15,6 +15,15 @@ class nsupdate53(cmd.Cmd):
         self.r53 = r53.R53(awsac, awssc)
         cmd.Cmd.__init__(self)
 
+    def do_server(self,line):
+        """A dummy function to emulate nsupdate"""
+        pass
+
+    def do_zone:
+        """A dummy function to emulate nsupdate"""
+        pass
+
+    
 
     def do_update(self,args):
         """Update a DNS Record"""
