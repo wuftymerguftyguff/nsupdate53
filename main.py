@@ -24,6 +24,10 @@ class nsupdate53(cmd.Cmd):
         """A dummy function to emulate nsupdate"""
         pass
 
+    def do_answer(self, line):
+        """A dummy function to emulate nsupdate"""
+        pass
+
 
 
     def do_update(self,args):
