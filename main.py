@@ -3,16 +3,17 @@ import cmd
 import r53
 import sys
 import argparse
+import creds.py
 
-awsac="AKIAJKEIBTFAOMHZA3JQ"
-awssc="4NwB5cvRI+M5q41wUGdusQ7d0bGzMAkBdn3btRbF"
+
 
 
 
 class nsupdate53(cmd.Cmd):
 
     UPDATECMDS = ["delete", "add"]
-    r53 = r53.R53(awsac, awssc)
+    RRECORDTYPES = ["A"]
+    r53 = r53.R53(creds.awsac, creds.awssc)
 
     """Simple command processor example."""
 
@@ -46,7 +47,7 @@ class nsupdate53(cmd.Cmd):
                   print "Incorrect number of parameters for add"
                   quit(1)
             if updatehost and updatecmd == "delete":
-                if len(subcmds) == 2:
+                if len(subcmds) == 2 or  (len(subcmds) == 4 and subcmds[3] == "IN" and subcmds[4] in self.RRECORDTYPES):
                     self.r53.delArecord(updatehost)
                 else:
                     print "Incorrect number of parameters for delete"
