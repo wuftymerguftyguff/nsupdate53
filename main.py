@@ -20,7 +20,7 @@ class nsupdate53(cmd.Cmd):
         """A dummy function to emulate nsupdate"""
         pass
 
-    def do_zone:
+    def do_zone(self,line):
         """A dummy function to emulate nsupdate"""
         pass
 
