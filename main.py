@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import cmd
 import r53
+import sys
+import argparse
 
 awsac="AKIAJKEIBTFAOMHZA3JQ"
 awssc="4NwB5cvRI+M5q41wUGdusQ7d0bGzMAkBdn3btRbF"
@@ -10,11 +12,9 @@ awssc="4NwB5cvRI+M5q41wUGdusQ7d0bGzMAkBdn3btRbF"
 class nsupdate53(cmd.Cmd):
 
     UPDATECMDS = ["delete", "add"]
+    r53 = r53.R53(awsac, awssc)
 
     """Simple command processor example."""
-    def __init__(self):
-        self.r53 = r53.R53(awsac, awssc)
-        cmd.Cmd.__init__(self)
 
     def do_server(self,line):
         """A dummy function to emulate nsupdate"""
@@ -62,12 +62,19 @@ class nsupdate53(cmd.Cmd):
         """Get All Hosted Zones"""
         print self.r53.getHostedZoneList()
 
+    def do_quit(self,line):
+        return self.do_EOF
 
     def do_EOF(self, line):
         return True
 
 
 if __name__ == '__main__':
-    u = nsupdate53()
+    parser = argparse.ArgumentParser(description='Emulate nsupdate using AWS Route53')
+    parser.add_argument('filename', nargs='?', type=argparse.FileType('r'),default=sys.stdin)
+    ourargs = parser.parse_args()
+    u = nsupdate53(stdin=ourargs.filename)
+    if ourargs.filename:
+        u.use_rawinput = False
     u.prompt = '> '
     u.cmdloop()
