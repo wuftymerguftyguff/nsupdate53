@@ -42,9 +42,15 @@ class nsupdate53(cmd.Cmd):
               if 3 <= len(subcmds) < 4:
                 ip = subcmds[2]
                 self.r53.addArecord(updatehost,ip)
+              else:
+                  print "Incorrect number of parameters for add"
+                  quit(1)
             if updatehost and updatecmd == "delete":
                 if len(subcmds) == 2:
                     self.r53.delArecord(updatehost)
+                else:
+                    print "Incorrect number of parameters for delete"
+                    quit(1)
 
     def do_send(self,args):
             self.r53.commit()
