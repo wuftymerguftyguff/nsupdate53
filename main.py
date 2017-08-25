@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import cmd
 import r53
 
@@ -23,7 +24,7 @@ class nsupdate53(cmd.Cmd):
         """A dummy function to emulate nsupdate"""
         pass
 
-    
+
 
     def do_update(self,args):
         """Update a DNS Record"""
