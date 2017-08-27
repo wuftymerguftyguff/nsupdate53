@@ -123,7 +123,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Emulate nsupdate using AWS Route53')
     parser.add_argument('-d', action='store_true')
     parser.add_argument('filename', nargs='?', type=argparse.FileType('r'),default=sys.stdin)
-    ourargs = parser.parse_args()
+    #ourargs = parser.parse_args()
+    ourargs, unknown = parser.parse_known_args()
     u = nsupdate53(stdin=ourargs.filename)
     if ourargs.filename:
         u.use_rawinput = False
