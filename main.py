@@ -118,6 +118,7 @@ class nsupdate53(cmd.Cmd):
 
 
 if __name__ == '__main__':
+    print sys.argv[1:]
     r53 = r53.R53(creds.awsac, creds.awssc)
     parser = argparse.ArgumentParser(description='Emulate nsupdate using AWS Route53')
     parser.add_argument('-d', action='store_true')
