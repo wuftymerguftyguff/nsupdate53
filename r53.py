@@ -6,9 +6,23 @@ import re
 class R53:
 
     changes = None
+    zone = None
+    zoneid = None
 
     def __init__(self,awsac,awssc):
         self.ar53 = Route53Connection(aws_access_key_id=awsac,aws_secret_access_key=awssc,debug=1)
+
+    def setzone(self,zone):
+        validzone =  self.validateZoneName(zone)
+        zid = self.getZoneId(validzone)
+        if zid:
+            self.zone = zone
+            self.zoneid = zid
+            return True
+        else:
+            self.zone = None
+            self.zoneid = None
+            return False
 
     def getExternalIP(self):
         ext_ip = urllib2.urlopen('http://ipv4.icanhazip.com').read()
@@ -26,25 +40,23 @@ class R53:
         return rr
 
 
-    def getARecordForZone(self, zoneid, Zone):
-        Zone = self.validateZoneName(Zone)
-        rr = self.getResourceRecords(zoneid);
+    def getRecordForZone(self,type):
+        rr = self.getResourceRecords(self.zoneid);
         for rset in rr:
-            if rset.name == Zone and rset.type == "A":
+            if rset.name == self.zone and rset.type == type:
                 return rset
 
 
-    def getARecord(self, zoneid, Zone, host):
-        Zone = self.validateZoneName(Zone)
-        rr = self.getResourceRecords(zoneid)
-        for rset in rr:
-            if rset.name == host and rset.type == "A":
-                return rset
+    def getRecord(self, type, host):
+         rr = self.getResourceRecords(self.zoneid)
+         for rset in rr:
+             if rset.name == host and rset.type == type:
+                 return rset
 
 
 
 
-    def getZoneId(self, zone=None):
+    def getZoneId(self, zone):
         zone = self.validateZoneName(zone)
         for Zone in self.getHostedZoneList():
             if zone in Zone.Name:
@@ -63,38 +75,54 @@ class R53:
             splitted = hostname.split(s)[1:]
             return s.join(splitted)
 
-    def addArecord(self, host, ip, ttl=86400):
-        zone = self.zoneNameFromHostname(host)
-        zoneID = self.getZoneId(zone)
-        self._addRR(zoneID,"A",host,ip,ttl)
+    def addArecord(self, host, ip, ttl=300):
+        self._addRR("A",host,ip,ttl)
+
+    def addPTRrecord(self, host, ip, ttl=300):
+        self._addRR("PTR", host, ip, ttl)
 
     def delArecord(self, host):
-        zone = self.zoneNameFromHostname(host)
-        zoneID = self.getZoneId(zone)
-        self._delRR(zoneID, "A", host)
+        self._delRR("A", host)
 
-    def _addRR(self,zoneid,rectype,host,ip,ttl=86400):
-        if self.changes is None:
-            self.changes = ResourceRecordSets(self.ar53, zoneid)
-        change = self.changes.add_change("CREATE", host, rectype, ttl)
-        change.add_value(ip)
+    def delPTRrecord(self, host):
+        self._delRR("PTR", host)
+
+    def _addRR(self,rectype,host,ip,ttl=300):
+        if self.zoneid is not None:
+            if self.changes is None:
+                self.changes = ResourceRecordSets(self.ar53, self.zoneid)
+            change = self.changes.add_change("CREATE", host, rectype, ttl)
+            change.add_value(ip)
+        else:
+            print "Zone not set, or does not exist in DNS"
 
 
-    def _delRR(self,zoneid,rectype,host,ttl=86400):
-        zone = self.zoneNameFromHostname(host)
-        ARecord = self.getARecord(zoneid, zone, host)
-        if ARecord:
-            oldIP = ARecord.resource_records[0]
-            if oldIP:
-                if self.changes is None:
-                    self.changes = ResourceRecordSets(self.ar53, zoneid)
-                change = self.changes.add_change("DELETE", host, rectype, ttl)
-                change.add_value(oldIP)
+
+    def _delRR(self,rectype,host,ttl=300):
+        if self.zoneid is not None:
+            #zone = self.zoneNameFromHostname(host)
+            ARecord = self.getRecord(rectype,host)
+            if ARecord:
+                oldIP = ARecord.resource_records[0]
+                oldttl = ARecord.ttl
+                if oldttl:
+                    ttl = oldttl
+                if oldIP:
+                    if self.changes is None:
+                        self.changes = ResourceRecordSets(self.ar53, self.zoneid)
+                    change = self.changes.add_change("DELETE", host, rectype, ttl)
+                    change.add_value(oldIP)
+        else:
+            print "Zone not set, or does not exist in DNS"
 
     def commit(self):
         if self.changes is not None:
                 self.changes.commit()
                 self.changes = None
+                self.zoneid = None
+                self.zone = None
+        else:
+            print "No Changes to send"
 
 
 

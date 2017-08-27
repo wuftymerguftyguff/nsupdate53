@@ -6,7 +6,7 @@ import argparse
 import creds
 
 class updatecommand(cmd.Cmd):
-    RRECORDTYPES = ["A"]
+    RRECORDTYPES = ["A", "PTR"]
 
     def do_add(self,args):
         # args should have this format here
@@ -17,8 +17,11 @@ class updatecommand(cmd.Cmd):
             updatehost = subcmds[0]
             ip = subcmds[-1]
             type = subcmds[-2]
+            ttl = subcmds[-4]
             if type == "A":
-                r53.addArecord(updatehost, ip)
+                r53.addArecord(updatehost, ip, ttl)
+            elif type == "PTR":
+                r53.addPTRrecord(updatehost, ip, ttl)
             else:
                 print "Unsupported Record Type"
                 quit(1)
@@ -35,15 +38,21 @@ class updatecommand(cmd.Cmd):
         subcmds = args.split()
         if 3 <= len(subcmds) < 4:
             updatehost = subcmds[0]
+            type = subcmds[-1]
             if updatehost:
-                if subcmds[1] == "IN" and subcmds[2] in self.RRECORDTYPES:
-                    r53.delArecord(updatehost)
+                if subcmds[1] == "IN" and type in self.RRECORDTYPES:
+                    if  type == 'A':
+                        r53.delArecord(updatehost)
+                    if  type == 'PTR':
+                        r53.delPTRrecord(updatehost)
                 else:
-                    print "Incorrect number of parameters for delete"
+                    print "Incorrect parameters for delete"
                     quit(1)
         else:
             print "Incorrect number of parameters for delete"
             quit(1)
+
+
 
 
 
@@ -58,9 +67,19 @@ class nsupdate53(cmd.Cmd):
         """A dummy function to emulate nsupdate"""
         pass
 
-    def do_zone(self,line):
-        """A dummy function to emulate nsupdate"""
-        pass
+    def do_zone(self,args):
+        """A set the DNS zone that we are working on"""
+        subcmds = args.split()
+        if  len(subcmds) == 1:
+            zone = subcmds[0]
+            if not r53.setzone(zone):
+                print "Zone %s does not exist in our DNS, or we don't manage it" % zone
+                quit(1)
+
+
+        else:
+            print "Incorrect number of parameters for zone"
+            quit(1)
 
     def do_answer(self, line):
         """A dummy function to emulate nsupdate"""
